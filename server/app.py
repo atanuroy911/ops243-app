@@ -1,6 +1,8 @@
 from flask import Flask, render_template
 import time
 import serial
+import json
+import jsonify
 
 def send_serial_cmd(print_prefix, command):
     """
@@ -36,22 +38,36 @@ ser.flushInput()
 ser.flushOutput()
 
 # constants for the OPS module
-Ops_Speed_Output_Units = ['US', 'UK', 'UM', 'UC']
-Ops_Speed_Output_Units_lbl = ['mph', 'km/h', 'm/s', 'cm/s']
-Ops_Blanks_Pref_Zero = 'BZ'
-Ops_Sampling_Frequency = 'SX'
-Ops_Transmit_Power = 'PX'
-Ops_Threshold_Control = 'MX'
-Ops_Module_Information = '??'
-Ops_Overlook_Buffer = 'OZ'
+Ops_Speed_Output_Units = ["US", "UK", "UM", "UC"]
+Ops_Speed_Output_Units_lbl = ["mph", "km/h", "m/s", "cm/s"]
+Ops_Blanks_Pref_Zero = "BZ"
+Ops_Sampling_Frequency = "SX"
+Ops_Transmit_Power = "PX"
+Ops_Threshold_Control = "MX"
+Ops_Module_Information = "??"
+Ops_Overlook_Buffer = "OZ"
+Ops_Json_Output = "OJ"
+Ops_Mag_Output = "OM"
+Ops_Detect_Object_Output = "ON"
+Ops_Time_Set = "OT"
+Ops_TimeHuman_Set = "OH"
+Ops_Set_Sampling_Rate = "SI"
+
+
 
 # initialize the OPS module
 send_serial_cmd("\nOverlook buffer", Ops_Overlook_Buffer)
-send_serial_cmd("\nSet Speed Output Units: ", Ops_Speed_Output_Units[0])
+send_serial_cmd("\nSet Speed Output Units: ", Ops_Speed_Output_Units[1])
 send_serial_cmd("\nSet Sampling Frequency: ", Ops_Sampling_Frequency)
 send_serial_cmd("\nSet Transmit Power: ", Ops_Transmit_Power)
 send_serial_cmd("\nSet Threshold Control: ", Ops_Threshold_Control)
 send_serial_cmd("\nSet Blanks Preference: ", Ops_Blanks_Pref_Zero)
+send_serial_cmd("\nSet Json Preference: ", Ops_Json_Output)
+send_serial_cmd("\nSet Mag Preference: ", Ops_Mag_Output)
+send_serial_cmd("\nSet Sampling Preference: ", Ops_Set_Sampling_Rate)
+# send_serial_cmd("\nSet Detected Object Preference: ", Ops_Detect_Object_Output)
+# send_serial_cmd("\nSet Time Preference: ", Ops_Time_Set)
+# send_serial_cmd("\nSet Time Human Preference: ", Ops_TimeHuman_Set)
 # send_serial_cmd("\nModule Information: ", Ops_Module_Information)
 
 print("SERVICE STARTED")
@@ -61,27 +77,21 @@ def ops_get_speed():
     capture speed reading from OPS module
     """
     #captured_speeds = []
-    while True:
-        speed_available = False
-        Ops_rx_bytes = ser.readline()
-        # check for speed information from OPS module
-        Ops_rx_bytes_length = len(Ops_rx_bytes)
-        if Ops_rx_bytes_length != 0:
-            Ops_rx_str = str(Ops_rx_bytes)
-            # print("RX:"+Ops_rx_str)
-            if Ops_rx_str.find('{') == -1:
-                # speed data found
-                try:
-                    Ops_rx_float = float(Ops_rx_bytes)
-                    speed_available = True
-                except ValueError:
-                    print("Unable to convert to a number the string: " + Ops_rx_str)
-                    speed_available = False
+    # while True:
+    speed_available = False
+    Ops_rx_bytes = ser.readline()
+    # check for speed information from OPS module
+    Ops_rx_bytes_length = len(Ops_rx_bytes)
+    # print(Ops_rx_bytes)
+    # Process the streaming data line by line
+    
+    strip_data = Ops_rx_bytes.decode("utf-8").strip()
+    # Parse the data
+    data = json.loads(strip_data)  # Define this function to parse streaming data
+    print(data)
+    return(data)
+    # return jsonify(data)
 
-        if speed_available == True:
-            speed_rnd = round(Ops_rx_float)
-
-            return float(speed_rnd)
 
 app = Flask(__name__)
 

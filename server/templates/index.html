@@ -3,9 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Streaming Data Visualization</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <h1>Welcome to Omnipresense 243X Web App Server</h1>
+    <h1>Streaming Data Visualization</h1>
+    <div class="graph-container">
+        <canvas id="velocity-chart"></canvas>
+    </div>
+    <div class="graph-container">
+        <canvas id="range-chart"></canvas>
+    </div>
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
 </body>
 </html>
