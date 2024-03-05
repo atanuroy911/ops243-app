@@ -69,7 +69,6 @@ send_serial_cmd("\nSet Sampling Preference: ", Ops_Set_Sampling_Rate)
 # send_serial_cmd("\nSet Time Human Preference: ", Ops_TimeHuman_Set)
 # send_serial_cmd("\nModule Information: ", Ops_Module_Information)
 
-
 def ops_get_speed():
     """
     capture speed reading from OPS module
