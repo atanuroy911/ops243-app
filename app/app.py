@@ -7,6 +7,7 @@ import json
 import serial
 import csv
 import time
+import cv2
 from datetime import datetime
 import threading  # Import threading module
 
@@ -31,7 +32,7 @@ def send_serial_cmd(print_prefix, command):
                 ser_write_verify = True
 
 ser = serial.Serial(
-    port='/dev/cu.usbmodem14201',
+    port='COM7',
     baudrate=9600,
     parity=serial.PARITY_NONE,
     stopbits=serial.STOPBITS_ONE,
@@ -59,7 +60,8 @@ Ops_Mag_Output = "OM"
 Ops_Detect_Object_Output = "ON"
 Ops_Time_Set = "OT"
 Ops_TimeHuman_Set = "OH"
-Ops_Set_Sampling_Rate = "SX"
+Ops_Set_Sampling_Rate = "SI"
+Ops_Delayed_Report = "W1"
 
 # initialize the OPS module
 send_serial_cmd("\nOverlook buffer", Ops_Overlook_Buffer)
@@ -72,6 +74,7 @@ send_serial_cmd("\nSet Json Preference: ", Ops_Json_Output)
 send_serial_cmd("\nSet Mag Preference: ", Ops_Mag_Output)
 send_serial_cmd("\nSet Sampling Preference: ", Ops_Set_Sampling_Rate)
 send_serial_cmd("\nSet Time Preference: ", Ops_Time_Set)
+# send_serial_cmd("\nSet Time Delay: ", Ops_Delayed_Report)
 
 print("SERVICE STARTED")
 
@@ -91,13 +94,47 @@ def ops_get_speed():
         pass
 
 class RealTimePlot(wx.Frame):
+
+
+    def init_camera(self):
+        self.camera_panel = wx.Panel(self.panel)
+        self.camera_panel.SetBackgroundColour(wx.Colour(0, 0, 0))  # Set background color to black
+
+        self.camera_display = wx.StaticBitmap(self.camera_panel)
+
+        # Create a thread to continuously capture and display the webcam feed
+        self.camera_thread = threading.Thread(target=self.update_camera_feed)
+        self.camera_thread.start()
+
+
+    def update_camera_feed(self):
+        cap = cv2.VideoCapture(0)  # Open the default camera (index 0)
+
+        while True:
+            ret, frame = cap.read()  # Read a frame from the camera
+            if ret:
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB format
+                h, w = frame.shape[:2]
+                self.camera_panel.SetSize((420, 320))
+                img = wx.Bitmap.FromBuffer(w, h, frame)
+                
+                # Scale the frame to fit the panel size
+                img = img.ConvertToImage().Scale(self.camera_panel.GetSize()[0], self.camera_panel.GetSize()[1])
+                wx.CallAfter(self.display_frame, img)
+
+
+    def display_frame(self, img):
+        self.camera_display.SetBitmap(wx.Bitmap(img))
+
+        
     def __init__(self, parent, title):
-        super(RealTimePlot, self).__init__(parent, title=title, size=(800, 600))
+        super(RealTimePlot, self).__init__(parent, title=title, size=(1400, 800))
 
         self.recording = False
-        self.interval_time = 1  # Default interval time for matplotlib animation
+        self.interval_time = 10  # Default interval time for matplotlib animation
 
         self.init_ui()
+        self.init_camera()
 
     def init_ui(self):
         self.panel = wx.Panel(self)
@@ -106,16 +143,16 @@ class RealTimePlot(wx.Frame):
         self.fig, (self.ax_velocity, self.ax_range) = plt.subplots(2, 1)
 
         # Create a line for velocity plot
-        self.line_velocity, = self.ax_velocity.plot([], [], lw=2, marker='o')
+        self.line_velocity, = self.ax_velocity.plot([], [], lw=2)
         self.ax_velocity.grid()
         self.ax_velocity.set_title('Velocity')
-        self.ax_velocity.set_ylim(0, 5)  # Set y-axis limits as per your data range
+        self.ax_velocity.set_ylim(-4, 4)  # Set y-axis limits as per your data range
 
         # Create a line for range plot
-        self.line_range, = self.ax_range.plot([], [], lw=2, marker='o')
+        self.line_range, = self.ax_range.plot([], [], lw=2)
         self.ax_range.grid()
         self.ax_range.set_title('Range')
-        self.ax_range.set_ylim(0, 10)  # Set y-axis limits as per your data range
+        self.ax_range.set_ylim(0, 20)  # Set y-axis limits as per your data range
 
         # Create deques to store data points for plotting
         self.xdata_velocity = deque(maxlen=100)
@@ -172,30 +209,34 @@ class RealTimePlot(wx.Frame):
         self.start_recording_btn.Bind(wx.EVT_BUTTON, self.start_recording)
         self.stop_recording_btn.Bind(wx.EVT_BUTTON, self.stop_recording)
 
-        # Create a text box with a button for bottom left corner
+        # # Create a text box with a button for bottom left corner
         self.text_box = wx.TextCtrl(self.panel, style=wx.TE_MULTILINE)
         self.send_btn = wx.Button(self.panel, label='Send')
 
         # Create a sizer for the left side
         left_sizer = wx.BoxSizer(wx.VERTICAL)
-        left_sizer.Add(self.current_values_text, 0, wx.EXPAND | wx.ALL, 5)
-        left_sizer.Add(self.start_recording_btn, 0, wx.EXPAND | wx.ALL, 5)
-        left_sizer.Add(self.stop_recording_btn, 0, wx.EXPAND | wx.ALL, 5)
-        left_sizer.Add(self.text_box, 1, wx.EXPAND | wx.ALL, 5)
-        left_sizer.Add(self.send_btn, 0, wx.EXPAND | wx.ALL, 5)
+        left_sizer.Add(self.text_box, 0, wx.ALL, 5)
+        left_sizer.Add(self.send_btn, 0, wx.ALL, 5)
+        left_sizer.Add(self.start_recording_btn, 0, wx.ALL, 5)
+        left_sizer.Add(self.stop_recording_btn, 0, wx.ALL, 5)
+        
 
         # Create a sizer for the right side
-        right_sizer = wx.BoxSizer(wx.VERTICAL)
+        right_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        spacer = wx.StaticText(self.panel, label="")  # You can use a StaticText as a spacer
+        right_sizer.Add(spacer, 1, flag=wx.EXPAND | wx.ALL, border=5)
         right_sizer.Add(self.canvas, 1, wx.EXPAND | wx.ALL, 5)
+        right_sizer.Add(self.current_values_text, 0, wx.EXPAND | wx.ALL, 5)
 
         # Create a horizontal sizer for the entire panel
         main_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        main_sizer.Add(left_sizer, 1, wx.EXPAND)
-        main_sizer.Add(right_sizer, 2, wx.EXPAND)
+        main_sizer.Add(right_sizer, 1, wx.EXPAND)
+        main_sizer.Add(left_sizer, 0, wx.EXPAND)
 
         self.panel.SetSizerAndFit(main_sizer)
 
         self.Show()
+    
 
     def start_recording(self, event):
         self.recording = True
