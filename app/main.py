@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from PyQt5.QtGui import QPixmap, QImage
 import seaborn as sns  # Import seaborn
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QSpinBox, QLineEdit
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QSpinBox, QLineEdit, QMessageBox
 from PyQt5.QtCore import QTimer, QObject, QThread, pyqtSignal, pyqtSlot, Qt
 
 # Initialize seaborn
@@ -129,6 +129,27 @@ class RealTimePlot(QMainWindow):
         # Left side layout
         self.left_layout = QVBoxLayout()
         self.layout.addLayout(self.left_layout)
+        
+        label_style = """
+                QLabel {
+                    font-weight: bold;
+                    font-size: 20px;
+                    color: #333; /* Text color */
+                    background-color: #f0f0f0; /* Background color */
+                    border: 2px solid #ccc; /* Border */
+                    padding: 5px; /* Padding */
+                    border-radius: 5px; /* Border radius */
+                    min-width: 100px; /* Set minimum width */
+                    min-height: 40px; /* Set minimum height */
+                }
+            """
+        # Labels for displaying current speed and range
+        self.range_label = QLabel(self)
+        self.range_label.setStyleSheet(label_style)
+        self.speed_label = QLabel(self)
+        self.speed_label.setStyleSheet(label_style)
+        self.left_layout.addWidget(self.range_label)
+        self.left_layout.addWidget(self.speed_label)
 
         # Camera feed
         self.camera_label = QLabel(self)
@@ -222,6 +243,7 @@ class RealTimePlot(QMainWindow):
                 self.line_velocity.set_xdata(list(self.line_velocity.get_xdata())[-self.data_points_spinner.value():] + [data['time']])
                 self.line_velocity.set_ydata(list(self.line_velocity.get_ydata())[-self.data_points_spinner.value():] + [data['speed']])
                 
+                self.speed_label.setText(f"Current Speed: {data['speed']}")
                 
                 # Add marker at each data point 
                 # self.ax_velocity.plot(data['time'], data['speed'], 'bo')
@@ -233,7 +255,8 @@ class RealTimePlot(QMainWindow):
                 self.line_range.set_xdata(list(self.line_range.get_xdata())[-self.data_points_spinner.value():] + [data['time']])
                 self.line_range.set_ydata(list(self.line_range.get_ydata())[-self.data_points_spinner.value():] + [data['range']])
                 
-                
+                self.range_label.setText(f"Current Range: {data['range']}")
+
                 # Add marker at each data point
                 # self.ax_range.plot(data['time'], data['range'], 'ro')
                 
@@ -266,6 +289,27 @@ class RealTimePlot(QMainWindow):
                 for data in self.recorded_data:
                     writer.writerow({key: data.get(key, '') for key in self.recorded_fieldnames})
 
+    def closeEvent(self, event):
+        if self.recording:
+            reply = QMessageBox.question(self, 'Message', "Do you want to save recorded data before closing?",
+                                        QMessageBox.Save | QMessageBox.Cancel | QMessageBox.Close,
+                                        QMessageBox.Save)
+
+            if reply == QMessageBox.Save:
+                self.save_to_csv()
+                event.accept()
+            elif reply == QMessageBox.Cancel:
+                event.ignore()
+            else:
+                event.accept()
+        
+        else:
+            reply = QMessageBox.question(self, 'Message', "Do you want to close?",
+                                        QMessageBox.Yes | QMessageBox.No)
+            if reply == QMessageBox.No:
+                event.ignore()
+            else:
+                event.accept()
 def main():
     app = QApplication(sys.argv)
     window = RealTimePlot()
