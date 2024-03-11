@@ -8,9 +8,13 @@ from datetime import datetime
 import cv2
 from collections import deque
 import matplotlib.pyplot as plt
+import seaborn as sns  # Import seaborn
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QSpinBox, QLineEdit
 from PyQt5.QtCore import QTimer, pyqtSignal, pyqtSlot
+
+# Initialize seaborn
+sns.set()
 
 def send_serial_cmd(print_prefix, command):
     """

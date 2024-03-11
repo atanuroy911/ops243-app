@@ -1,6 +1,6 @@
 import time
 import queue
-from app.serial_ops import start_ops_thread
+from serial_ops import start_ops_thread
 
 def main():
     data_queue = start_ops_thread("/dev/cu.usbmodem14201")  # Adjust the port as needed

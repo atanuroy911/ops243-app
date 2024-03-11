@@ -60,7 +60,7 @@ send_serial_cmd("\nSet Blanks Preference: ", Ops_Blanks_Pref_Zero)
 send_serial_cmd("\nSet Json Preference: ", Ops_Json_Output)
 send_serial_cmd("\nSet Sampling Preference: ", Ops_Set_Sampling_Rate)
 send_serial_cmd("\nSet Time Preference: ", Ops_Time_Set)
-send_serial_cmd("\nSet Detect Object Preference: ", Ops_Detect_Object_Output)
+# send_serial_cmd("\nSet Detect Object Preference: ", Ops_Detect_Object_Output)
 # send_serial_cmd("\nSet Report delay Preference: ", Ops_Delayed_Report)
 
 

@@ -144,6 +144,7 @@ class RealTimePlot(QMainWindow):
     @pyqtSlot(dict)
     def handle_data(self, data):
         if 'speed' in data or 'range' in data:
+            print(type(data))
             if self.recording:
                 self.recorded_data.append(data)
                 # Update field names with any new keys from the received data
