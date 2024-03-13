@@ -47,7 +47,9 @@ Ops_Json_Output = "OJ"
 Ops_Detect_Object_Output = "ON"
 Ops_Time_Set = "OT"
 Ops_TimeHuman_Set = "OH"
-Ops_Set_Sampling_Rate = "SX"
+Ops_Set_Sampling_Rate = "SI"
+Ops_Mag_Output = "OM"
+
 # Ops_Delayed_Report = "W1"
 
 # initialize the OPS module
@@ -58,6 +60,7 @@ send_serial_cmd("\nSet Transmit Power: ", Ops_Transmit_Power)
 send_serial_cmd("\nSet Threshold Control: ", Ops_Threshold_Control)
 send_serial_cmd("\nSet Blanks Preference: ", Ops_Blanks_Pref_Zero)
 send_serial_cmd("\nSet Json Preference: ", Ops_Json_Output)
+send_serial_cmd("\nSet Mag Preference: ", Ops_Mag_Output)
 send_serial_cmd("\nSet Sampling Preference: ", Ops_Set_Sampling_Rate)
 send_serial_cmd("\nSet Time Preference: ", Ops_Time_Set)
 # send_serial_cmd("\nSet Detect Object Preference: ", Ops_Detect_Object_Output)
