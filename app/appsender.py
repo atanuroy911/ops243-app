@@ -39,6 +39,17 @@ def send_serial_cmd(print_prefix, command):
             if data_rx_str.find(ser_message_start):
                 ser_write_verify = True
 
+def send_data_to_arduino(data):
+    """
+    Function to send data to Arduino over serial connection
+    """
+    # Convert data to string
+    data_str = ','.join(map(str, data)) + '\n'
+    # Encode string to bytes
+    data_bytes = data_str.encode('utf-8')
+    # Write data to Arduino serial connection
+    arduino_serial.write(data_bytes)
+
 ser = serial.Serial(
     port='COM7',
     baudrate=9600,
@@ -48,6 +59,10 @@ ser = serial.Serial(
     timeout=1,
     writeTimeout=2
 )
+
+# Open serial connection to Arduino
+arduino_serial = serial.Serial('COM10', 9600)  # Replace 'COM10' with appropriate port for Arduino
+
 ser.flushInput()
 ser.flushOutput()
 
@@ -93,6 +108,8 @@ def ops_get_speed():
     try:
         Ops_rx_bytes = ser.readline()
         strip_data = Ops_rx_bytes.decode("utf-8").strip()
+        arduino_data = strip_data.split(',')
+        send_data_to_arduino(arduino_data)
         data = json.loads(strip_data)
         if 'speed' in data:
             return {'type': 'velocity', 'time': float(data['time']), 'speed': float(data['speed'])}
